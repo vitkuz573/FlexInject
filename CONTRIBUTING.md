@@ -16,7 +16,7 @@ Hello! 🎉 First off, thank you for considering contributing to FlexInject. It'
 
 ## Code of Conduct
 
-This project and everyone participating in it is governed by the [FlexInject Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to [project-email@example.com](mailto:vitkuz573@gmail.com).
+This project and everyone participating in it is governed by the [FlexInject Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code. Please report unacceptable behavior to [vitkuz573@gmail.com](mailto:vitkuz573@gmail.com).
 
 ## How Can I Contribute?
 
