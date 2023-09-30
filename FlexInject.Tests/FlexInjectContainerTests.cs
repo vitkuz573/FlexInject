@@ -134,6 +134,68 @@ public class FlexInjectContainerTests
         Assert.True(instance.Disposed);
     }
 
+
+    [Fact]
+    public void Resolve_InjectAttributeOnField_ShouldInjectSuccessfully()
+    {
+        var container = CreateContainer();
+        container.Register<ISample, Sample>();
+        container.Register<ClassWithInjectedField, ClassWithInjectedField>();
+        var instance = container.Resolve<ClassWithInjectedField>();
+        Assert.NotNull(instance.Sample);
+        Assert.IsType<Sample>(instance.Sample);
+    }
+
+    [Fact]
+    public void Resolve_InjectAttributeOnProperty_ShouldInjectSuccessfully()
+    {
+        var container = CreateContainer();
+        container.Register<ISample, Sample>();
+        container.Register<ClassWithInjectedProperty, ClassWithInjectedProperty>();
+        var instance = container.Resolve<ClassWithInjectedProperty>();
+        Assert.NotNull(instance.Sample);
+        Assert.IsType<Sample>(instance.Sample);
+    }
+
+    [Fact]
+    public void Resolve_WithDifferentNameAndTag_ShouldResolveSuccessfully()
+    {
+        var container = CreateContainer();
+        container.Register<ISample, Sample>("name", "tag");
+        var instance = container.Resolve<ISample>("name", "tag");
+        Assert.NotNull(instance);
+        Assert.IsType<Sample>(instance);
+    }
+
+    [Fact]
+    public void Resolve_UsingPolicy_ShouldResolveSuccessfully()
+    {
+        var container = CreateContainer();
+        container.AddPolicy(new SampleResolvePolicy());
+        var instance = container.Resolve<ISample>();
+        Assert.NotNull(instance);
+        Assert.IsType<Sample>(instance);
+    }
+
+    [Fact]
+    public void CreateScope_ScopedInstance_ShouldBeDifferentInDifferentScopes()
+    {
+        var container = CreateContainer();
+        container.RegisterScoped<ISample, Sample>();
+        ISample instance1, instance2;
+        using (container.CreateScope())
+        {
+            instance1 = container.Resolve<ISample>();
+        }
+
+        using (container.CreateScope())
+        {
+            instance2 = container.Resolve<ISample>();
+        }
+
+        Assert.NotEqual(instance1, instance2);
+    }
+
     private FlexInjectContainer CreateContainer()
     {
         var mockLogger = new Mock<ILogger<FlexInjectContainer>>();
@@ -169,4 +231,25 @@ public class DisposableSample : IDisposableSample
 public class CyclicSample : ISample
 {
     public CyclicSample(ISample sample) { }
+}
+
+public class ClassWithInjectedField
+{
+    [Inject]
+    public ISample Sample;
+}
+
+public class ClassWithInjectedProperty
+{
+    [Inject]
+    public ISample Sample { get; set; }
+}
+
+public class SampleResolvePolicy : IResolvePolicy
+{
+    public object Resolve(FlexInjectContainer container, Type type, string name, string tag)
+    {
+        if (type == typeof(ISample)) return new Sample();
+        return null;
+    }
 }

@@ -121,7 +121,7 @@ public class FlexInjectContainer : IDisposable
         {
             var scopedInstances = _scopedInstances.Value;
             var resolveStack = _resolveStack.Value ??= new Stack<Type>();
-            
+
             if (resolveStack.Contains(type))
             {
                 throw new InvalidOperationException($"Detected a cyclic dependency: {string.Join(" -> ", resolveStack.Reverse().Select(t => t.Name)) + " -> " + type.Name}");
@@ -142,7 +142,7 @@ public class FlexInjectContainer : IDisposable
             foreach (var policy in _policies)
             {
                 var policyInstance = policy.Resolve(this, type, name, tag);
-                
+
                 if (policyInstance != null)
                 {
                     return policyInstance;
@@ -152,8 +152,6 @@ public class FlexInjectContainer : IDisposable
             if (_typeMapping.TryGetValue((type, name ?? "default", tag ?? "default"), out Type implementationType))
             {
                 var createdInstance = CreateInstance(implementationType);
-                resolveStack.Pop();
-                
                 return createdInstance;
             }
 
@@ -179,6 +177,13 @@ public class FlexInjectContainer : IDisposable
         {
             _logger.LogError(ex, $"Error resolving type {type.FullName} with name {name ?? "default"} and tag {tag ?? "default"}.");
             throw;
+        }
+        finally
+        {
+            if (_resolveStack.Value?.Count > 0)
+            {
+                _resolveStack.Value.Pop();
+            }
         }
     }
 
