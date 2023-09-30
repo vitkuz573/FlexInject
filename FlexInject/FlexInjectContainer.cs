@@ -54,27 +54,18 @@ public class FlexInjectContainer : IDisposable
         _scopedMapping[key] = typeof(TImplementation);
     }
 
-    public void RegisterSingleton<TInterface>(TInterface instance, string name = null, string tag = null)
+    public void RegisterSingleton<TInterface, TImplementation>(string name = null, string tag = null) where TImplementation : TInterface, new()
     {
-        if (instance == null)
-        {
-            throw new ArgumentNullException(nameof(instance));
-        }
-
-        Type instanceType = instance.GetType();
-        
-        if (!typeof(TInterface).IsAssignableFrom(instanceType))
-        {
-            throw new InvalidOperationException($"The provided instance's type {instanceType.FullName} does not implement {typeof(TInterface).FullName}.");
-        }
-
+        ValidateTypeCompatibility<TInterface, TImplementation>();
         var key = (typeof(TInterface), name ?? "default", tag ?? "default");
-        
+
         if (_singletonInstances.ContainsKey(key))
         {
             throw new InvalidOperationException($"Singleton instance of type {typeof(TInterface).FullName} with name {name ?? "default"} and tag {tag ?? "default"} is already registered.");
         }
 
+        TImplementation instance = new();
+        
         _singletonInstances[key] = instance;
     }
 

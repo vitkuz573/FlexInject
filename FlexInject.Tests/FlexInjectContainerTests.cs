@@ -61,28 +61,19 @@ public class FlexInjectContainerTests
     }
 
     [Fact]
-    public void RegisterSingleton_ValidInstance_ShouldRegisterSuccessfully()
+    public void RegisterSingleton_ValidType_ShouldRegisterSuccessfully()
     {
         var container = CreateContainer();
-        var instance = new Sample();
-        container.RegisterSingleton<ISample>(instance);
-        Assert.Equal(instance, container.Resolve<ISample>());
+        container.RegisterSingleton<ISample, Sample>();
+        Assert.IsType<Sample>(container.Resolve<ISample>());
     }
 
     [Fact]
-    public void RegisterSingleton_NullInstance_ShouldThrowException()
+    public void RegisterSingleton_AlreadyRegisteredType_ShouldThrowException()
     {
         var container = CreateContainer();
-        Assert.Throws<ArgumentNullException>(() => container.RegisterSingleton<ISample>(null));
-    }
-
-    [Fact]
-    public void RegisterSingleton_AlreadyRegisteredInstance_ShouldThrowException()
-    {
-        var container = CreateContainer();
-        var instance = new Sample();
-        container.RegisterSingleton<ISample>(instance);
-        Assert.Throws<InvalidOperationException>(() => container.RegisterSingleton<ISample>(new Sample()));
+        container.RegisterSingleton<ISample, Sample>();
+        Assert.Throws<InvalidOperationException>(() => container.RegisterSingleton<ISample, Sample>());
     }
 
     [Fact]
@@ -130,12 +121,15 @@ public class FlexInjectContainerTests
     public void Dispose_DisposableInstance_ShouldDispose()
     {
         var container = CreateContainer();
-        var instance = new DisposableSample();
-        container.RegisterSingleton<IDisposableSample>(instance);
-        container.Dispose();
-        Assert.True(instance.Disposed);
-    }
+        container.RegisterSingleton<IDisposableSample, DisposableSample>();
 
+        var resolvedInstance = container.Resolve<IDisposableSample>() as DisposableSample;
+
+        container.Dispose();
+
+        Assert.NotNull(resolvedInstance);
+        Assert.True(resolvedInstance.Disposed);
+    }
 
     [Fact]
     public void Resolve_InjectAttributeOnField_ShouldInjectSuccessfully()

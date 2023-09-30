@@ -5,7 +5,9 @@ VisualStudioVersion = 17.7.34031.279
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlexInject", "FlexInject\FlexInject.csproj", "{AD4EBD20-7EC8-4D7D-968A-010773702FDE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexInject.Tests", "FlexInject.Tests\FlexInject.Tests.csproj", "{2914AAA8-57D8-486A-8FAA-F3E1CFDD4D6A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "FlexInject.Tests", "FlexInject.Tests\FlexInject.Tests.csproj", "{2914AAA8-57D8-486A-8FAA-F3E1CFDD4D6A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FlexInjectExample", "FlexInjectExample\FlexInjectExample.csproj", "{39D3CE24-C4B4-4817-835A-E81F30CECA42}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +23,10 @@ Global
 		{2914AAA8-57D8-486A-8FAA-F3E1CFDD4D6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2914AAA8-57D8-486A-8FAA-F3E1CFDD4D6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{2914AAA8-57D8-486A-8FAA-F3E1CFDD4D6A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{39D3CE24-C4B4-4817-835A-E81F30CECA42}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{39D3CE24-C4B4-4817-835A-E81F30CECA42}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{39D3CE24-C4B4-4817-835A-E81F30CECA42}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{39D3CE24-C4B4-4817-835A-E81F30CECA42}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
