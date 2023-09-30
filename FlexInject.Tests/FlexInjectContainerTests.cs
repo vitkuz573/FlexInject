@@ -1,4 +1,6 @@
 using FlexInject;
+using FlexInject.Abstractions;
+using FlexInject.Attributes;
 using Microsoft.Extensions.Logging;
 using Moq;
 
