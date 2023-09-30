@@ -31,13 +31,7 @@ public class FlexInjectContainer : IDisposable
     private readonly ConcurrentDictionary<(Type, string, string), object> _singletonInstances = new();
     private readonly AsyncLocal<ConcurrentDictionary<(Type, string, string), object>> _scopedInstances = new();
     private readonly AsyncLocal<Stack<Type>> _resolveStack = new();
-    private readonly ILogger<FlexInjectContainer> _logger;
     private readonly List<IResolvePolicy> _policies = new();
-
-    public FlexInjectContainer(ILogger<FlexInjectContainer> logger)
-    {
-        _logger = logger;
-    }
 
     public void Register<TInterface, TImplementation>(string name = null, string tag = null) where TImplementation : TInterface
     {
@@ -173,11 +167,6 @@ public class FlexInjectContainer : IDisposable
 
             throw new InvalidOperationException($"Type {type.FullName} with name {name ?? "default"} and tag {tag ?? "default"} is not registered.");
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, $"Error resolving type {type.FullName} with name {name ?? "default"} and tag {tag ?? "default"}.");
-            throw;
-        }
         finally
         {
             if (_resolveStack.Value?.Count > 0)
@@ -193,9 +182,7 @@ public class FlexInjectContainer : IDisposable
         var parameters = constructor.GetParameters();
         var parameterInstances = parameters.Select(p => Resolve(p.ParameterType)).ToArray();
         var instance = Activator.CreateInstance(implementationType, parameterInstances);
-        
-        _logger.LogInformation($"Object of type {implementationType.Name} has been resolved.");
-        
+               
         foreach (var field in implementationType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Where(f => f.GetCustomAttribute<InjectAttribute>() != null))
         {
             var attr = field.GetCustomAttribute<InjectAttribute>();
@@ -231,14 +218,7 @@ public class FlexInjectContainer : IDisposable
         {
             if (instance is IDisposable disposable)
             {
-                try
-                {
-                    disposable.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, $"Error disposing instance of type {instance.GetType().FullName}.");
-                }
+                disposable.Dispose();
             }
         }
     }
