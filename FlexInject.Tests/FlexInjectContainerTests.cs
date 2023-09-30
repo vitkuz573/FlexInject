@@ -198,6 +198,23 @@ public class FlexInjectContainerTests
         Assert.NotEqual(instance1, instance2);
     }
 
+    [Fact]
+    public void Resolve_TypeWithConstructorParameters_ShouldResolveSuccessfully()
+    {
+        // Arrange
+        var container = CreateContainer();
+        container.Register<IService, ServiceImplementation>();
+        container.Register<IConsumer, Consumer>();
+
+        // Act
+        var consumer = container.Resolve<IConsumer>();
+
+        // Assert
+        Assert.NotNull(consumer);
+        Assert.NotNull(consumer.Service);
+        Assert.IsType<ServiceImplementation>(consumer.Service);
+    }
+
     private FlexInjectContainer CreateContainer()
     {
         return new FlexInjectContainer();
@@ -251,5 +268,23 @@ public class SampleResolvePolicy : IResolvePolicy
     public object Resolve(FlexInjectContainer container, Type type, string name, string tag)
     {
         return type == typeof(ISample) ? new Sample() : (object?)null;
+    }
+}
+
+public interface IService { }
+public class ServiceImplementation : IService { }
+
+public interface IConsumer
+{
+    IService Service { get; }
+}
+
+public class Consumer : IConsumer
+{
+    public IService Service { get; }
+
+    public Consumer(IService service)
+    {
+        Service = service;
     }
 }
