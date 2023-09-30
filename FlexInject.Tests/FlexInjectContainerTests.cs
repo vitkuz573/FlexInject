@@ -249,7 +249,6 @@ public class SampleResolvePolicy : IResolvePolicy
 {
     public object Resolve(FlexInjectContainer container, Type type, string name, string tag)
     {
-        if (type == typeof(ISample)) return new Sample();
-        return null;
+        return type == typeof(ISample) ? new Sample() : (object?)null;
     }
 }
