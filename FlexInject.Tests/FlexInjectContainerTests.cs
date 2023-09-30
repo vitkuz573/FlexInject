@@ -199,6 +199,7 @@ public class FlexInjectContainerTests
     private FlexInjectContainer CreateContainer()
     {
         var mockLogger = new Mock<ILogger<FlexInjectContainer>>();
+
         return new FlexInjectContainer(mockLogger.Object);
     }
 }
