@@ -21,11 +21,11 @@ namespace FlexInjectExample
     public class Application
     {
         [Inject]
-        public ILoggerService LoggerService { get; set; }
+        private ILoggerService _loggerService;
 
         public void Run()
         {
-            LoggerService.Log("Hello from Application!");
+            _loggerService.Log("Hello from Application!");
         }
     }
 

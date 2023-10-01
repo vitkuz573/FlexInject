@@ -121,6 +121,11 @@ public class FlexInjectContainer : IFlexServiceProvider, IDisposable
 
         foreach (var field in implementationType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Where(f => f.GetCustomAttribute<InjectAttribute>() != null))
         {
+            if (field.IsInitOnly)
+            {
+                throw new InvalidOperationException($"Cannot inject into readonly field {field.Name} of type {implementationType.FullName}.");
+            }
+
             var attr = field.GetCustomAttribute<InjectAttribute>();
             field.SetValue(instance, Resolve(field.FieldType, attr.Name, attr.Tag));
         }
