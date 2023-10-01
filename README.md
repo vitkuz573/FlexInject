@@ -50,12 +50,17 @@ FlexInject supports attribute injection using the `InjectAttribute`, which can b
 public class MyClass
 {
     [Inject(Name = "specialService")]
-    private readonly IService _service;
+    private IService _service;
     
     [Inject(Tag = "taggedService")]
     public IAnotherService AnotherService { get; set; }
 }
 ```
+
+### Considerations:
+- **Attribute Injection Limitations**: Injection through attributes occurs after the instance of the object has been created, which means that readonly fields cannot be injected using attributes. If a field is marked as `readonly`, or a property is readonly, consider using constructor injection instead.
+- **Recommended Use Cases**: While attribute injection can be convenient, constructor injection is recommended when feasible as it makes the dependencies of a class more explicit and promotes better design principles like immutability.
+- **Initialization Timing**: Be aware of the initialization timing when using attribute injection. Since injection occurs after object creation, any logic in the constructor that relies on injected dependencies will not work as expected.
 
 ### Adding Resolve Policies:
 You can extend the resolving capabilities of the container by implementing and adding custom `IResolvePolicy`.
@@ -93,7 +98,7 @@ container.Dispose();
 ```
 
 ### Documentation:
-For more detailed information and advanced usage, please refer to the full documentation (https://github.com/vitkuz573/FlexInject/wiki).
+For more detailed information and advanced usage, including considerations and best practices, please refer to the full documentation (https://github.com/vitkuz573/FlexInject/wiki).
 
 ### Download:
 FlexInject is open-source and available for download [here](https://github.com/vitkuz573/FlexInject).
