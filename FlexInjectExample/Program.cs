@@ -1,7 +1,5 @@
 ﻿using FlexInject;
-using FlexInject.Abstractions;
 using FlexInject.Attributes;
-using System;
 
 namespace FlexInjectExample
 {

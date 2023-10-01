@@ -19,12 +19,12 @@ public class FlexInjectContainer : IDisposable
     {
         ValidateTypeCompatibility<TInterface, TImplementation>();
         var key = (typeof(TInterface), name ?? "default", tag ?? "default");
-        
+
         if (_typeMapping.ContainsKey(key))
         {
             throw new InvalidOperationException($"Type {typeof(TInterface).FullName} with name {name ?? "default"} and tag {tag ?? "default"} is already registered.");
         }
-        
+
         _typeMapping[key] = typeof(TImplementation);
     }
 
@@ -32,12 +32,12 @@ public class FlexInjectContainer : IDisposable
     {
         ValidateTypeCompatibility<TInterface, TImplementation>();
         var key = (typeof(TInterface), name ?? "default", tag ?? "default");
-        
+
         if (_transientMapping.ContainsKey(key))
         {
             throw new InvalidOperationException($"Transient type {typeof(TInterface).FullName} with name {name ?? "default"} and tag {tag ?? "default"} is already registered.");
         }
-        
+
         _transientMapping[key] = typeof(TImplementation);
     }
 
@@ -45,7 +45,7 @@ public class FlexInjectContainer : IDisposable
     {
         ValidateTypeCompatibility<TInterface, TImplementation>();
         var key = (typeof(TInterface), name ?? "default", tag ?? "default");
-        
+
         if (_scopedMapping.ContainsKey(key))
         {
             throw new InvalidOperationException($"Scoped type {typeof(TInterface).FullName} with name {name ?? "default"} and tag {tag ?? "default"} is already registered.");
@@ -65,7 +65,7 @@ public class FlexInjectContainer : IDisposable
         }
 
         TImplementation instance = new();
-        
+
         _singletonInstances[key] = instance;
     }
 
@@ -155,7 +155,7 @@ public class FlexInjectContainer : IDisposable
         var parameters = constructor.GetParameters();
         var parameterInstances = parameters.Select(p => Resolve(p.ParameterType)).ToArray();
         var instance = Activator.CreateInstance(implementationType, parameterInstances);
-               
+
         foreach (var field in implementationType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Where(f => f.GetCustomAttribute<InjectAttribute>() != null))
         {
             var attr = field.GetCustomAttribute<InjectAttribute>();
@@ -169,7 +169,7 @@ public class FlexInjectContainer : IDisposable
         }
 
         (instance as IInitialize)?.Initialize();
-        
+
         return instance;
     }
 
