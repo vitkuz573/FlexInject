@@ -1,5 +1,7 @@
-
 ## FlexInject: Lightweight DI Container for .NET
+
+![Nuget Package Version](https://img.shields.io/nuget/v/FlexInject?style=for-the-badge)
+![Nuget Package](https://img.shields.io/nuget/dt/FlexInject?style=for-the-badge)
 
 ### Overview:
 FlexInject is a lightweight, efficient, and flexible Dependency Injection container for .NET applications. It enables developers to manage the lifecycle of their objects, register dependencies, and resolve them at runtime while providing scope management.
