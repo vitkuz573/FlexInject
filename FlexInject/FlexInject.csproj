@@ -7,6 +7,8 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <Description>FlexInject is a lightweight and efficient DI container for .NET, enabling seamless management of object lifecycles and dependencies. It offers attribute injection, custom resolve policies, and cyclic dependency detection for clean and maintainable code.</Description>
     <Authors>Vitaly Kuzyaev</Authors>
+    <RepositoryUrl>https://github.com/vitkuz573/FlexInject</RepositoryUrl>
+    <PackageTags>DI;DependencyInjection;IoC;Container;DotNet;FlexInject</PackageTags>
   </PropertyGroup>
 
   <ItemGroup>
