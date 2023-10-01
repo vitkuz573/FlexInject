@@ -3,6 +3,7 @@ using FlexInject.Abstractions;
 using FlexInject.Attributes;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Diagnostics.CodeAnalysis;
 
 namespace FlexInjectTests;
 
@@ -209,7 +210,7 @@ public class FlexInjectContainerTests
         Assert.IsType<ServiceImplementation>(consumer.Service);
     }
 
-    private FlexInjectContainer CreateContainer()
+    private static FlexInjectContainer CreateContainer()
     {
         return new FlexInjectContainer();
     }
@@ -237,11 +238,16 @@ public class DisposableSample : IDisposableSample
 {
     public bool Disposed { get; private set; }
 
-    public void Dispose() => Disposed = true;
+    public void Dispose()
+    {
+        Disposed = true;
+        GC.SuppressFinalize(this);
+    }
 }
 
 public class CyclicSample : ISample
 {
+    [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Intentionally left for testing purposes.")]
     public CyclicSample(ISample sample) { }
 }
 

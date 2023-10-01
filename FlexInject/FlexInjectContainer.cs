@@ -181,7 +181,7 @@ public class FlexInjectContainer : IDisposable
     public IDisposable CreateScope()
     {
         _scopedInstances.Value = new ConcurrentDictionary<(Type, string, string), object>();
-        
+
         return new Disposer(() => _scopedInstances.Value = null);
     }
 
@@ -194,6 +194,8 @@ public class FlexInjectContainer : IDisposable
                 disposable.Dispose();
             }
         }
+
+        GC.SuppressFinalize(this);
     }
 
     private class Disposer : IDisposable

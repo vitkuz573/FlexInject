@@ -7,7 +7,7 @@ namespace FlexInjectExample
 {
     class Program
     {
-        static void Main(string[] args)
+        static void Main()
         {
             using var container = new FlexInjectContainer();
             container.RegisterSingleton<ILoggerService, ConsoleLoggerService>();
