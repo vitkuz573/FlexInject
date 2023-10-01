@@ -1,5 +1,6 @@
 ﻿using FlexInject;
 using FlexInject.Attributes;
+using System;
 
 namespace FlexInjectExample
 {
@@ -7,9 +8,11 @@ namespace FlexInjectExample
     {
         static void Main()
         {
-            using var container = new FlexInjectContainer();
-            container.RegisterSingleton<ILoggerService, ConsoleLoggerService>();
-            container.Register<Application, Application>();
+            var services = new FlexServiceCollection();
+            services.AddSingleton<ILoggerService, ConsoleLoggerService>("hui");
+            services.AddTransient<Application, Application>();
+
+            using var container = services.BuildServiceProvider();
 
             var app = container.Resolve<Application>();
             app.Run();
@@ -18,7 +21,7 @@ namespace FlexInjectExample
 
     public class Application
     {
-        [Inject]
+        [Inject(Name = "hui")]
         public ILoggerService LoggerService { get; set; }
 
         public void Run()

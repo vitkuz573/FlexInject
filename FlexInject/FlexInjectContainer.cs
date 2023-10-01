@@ -15,65 +15,25 @@ public class FlexInjectContainer : IDisposable
     private readonly AsyncLocal<Stack<Type>> _resolveStack = new();
     private readonly List<IResolvePolicy> _policies = new();
 
-    public void Register<TInterface, TImplementation>(string name = null, string tag = null) where TImplementation : TInterface
+    public FlexInjectContainer(IEnumerable<ServiceDescriptor> services)
     {
-        ValidateTypeCompatibility<TInterface, TImplementation>();
-        var key = (typeof(TInterface), name ?? "default", tag ?? "default");
-
-        if (_typeMapping.ContainsKey(key))
+        foreach (var service in services)
         {
-            throw new InvalidOperationException($"Type {typeof(TInterface).FullName} with name {name ?? "default"} and tag {tag ?? "default"} is already registered.");
-        }
-
-        _typeMapping[key] = typeof(TImplementation);
-    }
-
-    public void RegisterTransient<TInterface, TImplementation>(string name = null, string tag = null) where TImplementation : TInterface
-    {
-        ValidateTypeCompatibility<TInterface, TImplementation>();
-        var key = (typeof(TInterface), name ?? "default", tag ?? "default");
-
-        if (_transientMapping.ContainsKey(key))
-        {
-            throw new InvalidOperationException($"Transient type {typeof(TInterface).FullName} with name {name ?? "default"} and tag {tag ?? "default"} is already registered.");
-        }
-
-        _transientMapping[key] = typeof(TImplementation);
-    }
-
-    public void RegisterScoped<TInterface, TImplementation>(string name = null, string tag = null) where TImplementation : TInterface
-    {
-        ValidateTypeCompatibility<TInterface, TImplementation>();
-        var key = (typeof(TInterface), name ?? "default", tag ?? "default");
-
-        if (_scopedMapping.ContainsKey(key))
-        {
-            throw new InvalidOperationException($"Scoped type {typeof(TInterface).FullName} with name {name ?? "default"} and tag {tag ?? "default"} is already registered.");
-        }
-
-        _scopedMapping[key] = typeof(TImplementation);
-    }
-
-    public void RegisterSingleton<TInterface, TImplementation>(string name = null, string tag = null) where TImplementation : TInterface, new()
-    {
-        ValidateTypeCompatibility<TInterface, TImplementation>();
-        var key = (typeof(TInterface), name ?? "default", tag ?? "default");
-
-        if (_singletonInstances.ContainsKey(key))
-        {
-            throw new InvalidOperationException($"Singleton instance of type {typeof(TInterface).FullName} with name {name ?? "default"} and tag {tag ?? "default"} is already registered.");
-        }
-
-        TImplementation instance = new();
-
-        _singletonInstances[key] = instance;
-    }
-
-    private static void ValidateTypeCompatibility<TInterface, TImplementation>() where TImplementation : TInterface
-    {
-        if (!typeof(TInterface).IsAssignableFrom(typeof(TImplementation)))
-        {
-            throw new InvalidOperationException($"Type {typeof(TImplementation).FullName} does not implement {typeof(TInterface).FullName}.");
+            var key = (service.ServiceType, service.Name ?? "default", service.Tag ?? "default");
+            
+            switch (service.Lifetime)
+            {
+                case ServiceLifetime.Transient:
+                    _transientMapping[key] = service.ImplementationType;
+                    break;
+                case ServiceLifetime.Scoped:
+                    _scopedMapping[key] = service.ImplementationType;
+                    break;
+                case ServiceLifetime.Singleton:
+                    var instance = Activator.CreateInstance(service.ImplementationType);
+                    _singletonInstances[key] = instance;
+                    break;
+            }
         }
     }
 
@@ -109,33 +69,25 @@ public class FlexInjectContainer : IDisposable
             foreach (var policy in _policies)
             {
                 var policyInstance = policy.Resolve(this, type, name, tag);
-
+                
                 if (policyInstance != null)
                 {
                     return policyInstance;
                 }
             }
 
-            if (_typeMapping.TryGetValue((type, name ?? "default", tag ?? "default"), out Type implementationType))
+            if (_typeMapping.TryGetValue((type, name ?? "default", tag ?? "default"), out Type implementationType)
+                || _transientMapping.TryGetValue((type, name ?? "default", tag ?? "default"), out implementationType)
+                || (scopedInstances != null && _scopedMapping.TryGetValue((type, name ?? "default", tag ?? "default"), out implementationType)))
             {
                 var createdInstance = CreateInstance(implementationType);
-                return createdInstance;
-            }
-
-            if (_transientMapping.TryGetValue((type, name ?? "default", tag ?? "default"), out implementationType))
-            {
-                return CreateInstance(implementationType);
-            }
-
-            if (scopedInstances != null && _scopedMapping.TryGetValue((type, name ?? "default", tag ?? "default"), out implementationType))
-            {
-                if (!scopedInstances.TryGetValue((type, name ?? "default", tag ?? "default"), out instance))
+                
+                if (scopedInstances != null && _scopedMapping.ContainsKey((type, name ?? "default", tag ?? "default")))
                 {
-                    instance = CreateInstance(implementationType);
-                    scopedInstances.TryAdd((type, name ?? "default", tag ?? "default"), instance);
+                    scopedInstances.TryAdd((type, name ?? "default", tag ?? "default"), createdInstance);
                 }
 
-                return instance;
+                return createdInstance;
             }
 
             throw new InvalidOperationException($"Type {type.FullName} with name {name ?? "default"} and tag {tag ?? "default"} is not registered.");
@@ -181,7 +133,7 @@ public class FlexInjectContainer : IDisposable
     public IDisposable CreateScope()
     {
         _scopedInstances.Value = new ConcurrentDictionary<(Type, string, string), object>();
-
+        
         return new Disposer(() => _scopedInstances.Value = null);
     }
 
@@ -209,9 +161,4 @@ public class FlexInjectContainer : IDisposable
 
         public void Dispose() => _dispose();
     }
-}
-
-public interface IResolvePolicy
-{
-    object Resolve(FlexInjectContainer container, Type type, string name, string tag);
 }
