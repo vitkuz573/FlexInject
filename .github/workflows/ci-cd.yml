@@ -74,8 +74,8 @@ jobs:
     - name: Check if code has changed
       id: check_code_changed
       run: |
-        files_changed=$(git diff --name-only -- ${{ github.event.before }} ${{ github.sha }} | grep -vE '(\.md$)|(\.txt$)')
-        if [ -z "$files_changed" ]; then
+        git diff --name-only -- ${{ github.event.before }} ${{ github.sha }} | grep -vE '(\.md$)|(\.txt$)' || true
+        if [ $? -eq 1 ]; then
           echo "code_changed=false" >> $GITHUB_ENV
         else
           echo "code_changed=true" >> $GITHUB_ENV
