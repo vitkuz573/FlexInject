@@ -21,7 +21,7 @@ namespace FlexInjectExample
     public class Application
     {
         [Inject]
-        private ILoggerService _loggerService;
+        private readonly ILoggerService _loggerService;
 
         public void Run()
         {
