@@ -22,6 +22,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
       
     - name: Setup .NET 7.0 SDK
       uses: actions/setup-dotnet@v1
@@ -61,6 +63,8 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
       
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
@@ -70,7 +74,7 @@ jobs:
     - name: Check if code has changed
       id: check_code_changed
       run: |
-        git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -qvE '(\.md$)|(\.txt$)' 
+        git diff --name-only -- ${{ github.event.before }} ${{ github.sha }} | grep -qvE '(\.md$)|(\.txt$)' 
         echo "code_changed=$?" >> $GITHUB_ENV
       
     - name: Bump version and create tag
