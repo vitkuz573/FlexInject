@@ -2,12 +2,12 @@
 
 namespace FlexInject;
 
-public class FlexServiceCollection
+public class FlexServiceCollection : IFlexServiceCollection
 {
     private readonly List<ServiceDescriptor> _services = new();
     private readonly List<IResolvePolicy> _policies = new();
 
-    public FlexServiceCollection AddTransient<TService, TImplementation>(string name = null, string tag = null) where TImplementation : TService
+    public IFlexServiceCollection AddTransient<TService, TImplementation>(string name = null, string tag = null) where TImplementation : TService
     {
         CheckForExistingRegistration(typeof(TService), ServiceLifetime.Transient);
         _services.Add(new ServiceDescriptor(typeof(TService), typeof(TImplementation), ServiceLifetime.Transient, name, tag));
@@ -15,7 +15,7 @@ public class FlexServiceCollection
         return this;
     }
 
-    public FlexServiceCollection AddScoped<TService, TImplementation>(string name = null, string tag = null) where TImplementation : TService
+    public IFlexServiceCollection AddScoped<TService, TImplementation>(string name = null, string tag = null) where TImplementation : TService
     {
         CheckForExistingRegistration(typeof(TService), ServiceLifetime.Scoped);
         _services.Add(new ServiceDescriptor(typeof(TService), typeof(TImplementation), ServiceLifetime.Scoped, name, tag));
@@ -23,7 +23,7 @@ public class FlexServiceCollection
         return this;
     }
 
-    public FlexServiceCollection AddSingleton<TService, TImplementation>(string name = null, string tag = null) where TImplementation : TService
+    public IFlexServiceCollection AddSingleton<TService, TImplementation>(string name = null, string tag = null) where TImplementation : TService
     {
         CheckForExistingRegistration(typeof(TService), ServiceLifetime.Singleton);
         _services.Add(new ServiceDescriptor(typeof(TService), typeof(TImplementation), ServiceLifetime.Singleton, name, tag));
@@ -39,7 +39,7 @@ public class FlexServiceCollection
         }
     }
 
-    public FlexServiceCollection AddPolicy(IResolvePolicy policy)
+    public IFlexServiceCollection AddPolicy(IResolvePolicy policy)
     {
         _policies.Add(policy);
 

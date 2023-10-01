@@ -9,7 +9,7 @@ namespace FlexInjectExample
         static void Main()
         {
             var services = new FlexServiceCollection();
-            services.AddSingleton<ILoggerService, ConsoleLoggerService>("hui");
+            services.AddSingleton<ILoggerService, ConsoleLoggerService>();
             services.AddTransient<Application, Application>();
 
             using var container = services.BuildServiceProvider();
@@ -21,7 +21,7 @@ namespace FlexInjectExample
 
     public class Application
     {
-        [Inject(Name = "hui")]
+        [Inject]
         public ILoggerService LoggerService { get; set; }
 
         public void Run()
