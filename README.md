@@ -23,22 +23,17 @@ var container = new FlexInjectContainer();
 #### 2. **Register Types:**
 ```csharp
 container.Register<IService, ServiceImplementation>();
+container.RegisterSingleton<ISingletonService, SingletonServiceImplementation>();
 container.RegisterTransient<ITransientService, TransientServiceImplementation>();
 container.RegisterScoped<IScopedService, ScopedServiceImplementation>();
 ```
 
-#### 3. **Register Singleton Instance:**
-```csharp
-var singletonInstance = new SingletonService();
-container.RegisterSingleton<ISingletonService>(singletonInstance);
-```
-
-#### 4. **Resolve Types:**
+#### 3. **Resolve Types:**
 ```csharp
 var service = container.Resolve<IService>();
 ```
 
-#### 5. **Create a Scope:**
+#### 4. **Create a Scope:**
 ```csharp
 using (var scope = container.CreateScope())
 {
