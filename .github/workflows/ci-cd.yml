@@ -23,11 +23,16 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
       
-    - name: Setup .NET
+    - name: Setup .NET 7.0 SDK
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: ${{ matrix.dotnet }}
-
+        dotnet-version: '7.0.x'
+      
+    - name: Setup .NET 6.0 SDK
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '6.0.x'
+      
     - name: Cache dependencies
       uses: actions/cache@v2
       with:
@@ -61,13 +66,13 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: '7.0.x'
-
+      
     - name: Check if code has changed
       id: check_code_changed
       run: |
         git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -qvE '(\.md$)|(\.txt$)' 
         echo "code_changed=$?" >> $GITHUB_ENV
-
+      
     - name: Bump version and create tag
       id: bump_version
       if: env.code_changed == '0'
@@ -75,7 +80,7 @@ jobs:
         NEW_VERSION=$(date +'%Y.%m.%d')
         git tag $NEW_VERSION
         echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
-
+      
     - name: Publish to NuGet
       if: steps.check_code_changed.outputs.code_changed == '0'
       run: |
