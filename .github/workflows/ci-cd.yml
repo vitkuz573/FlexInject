@@ -1,6 +1,16 @@
 name: CI/CD Pipeline
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '**.md'
+      - '**.txt'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - '**.txt'
 
 jobs:
   build-and-test:
@@ -8,8 +18,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        dotnet: ['7.0.x']
-
+        dotnet: ['7.0.x', '6.0.x']
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -18,6 +27,14 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: ${{ matrix.dotnet }}
+
+    - name: Cache dependencies
+      uses: actions/cache@v2
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-dotnet-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-dotnet-
       
     - name: Restore dependencies
       run: dotnet restore
@@ -27,12 +44,40 @@ jobs:
       
     - name: Run tests
       run: dotnet test --no-build --verbosity normal
+      
+    - name: Run code quality checks
+      run: dotnet build --no-restore -warnaserror
 
   deploy:
     needs: build-and-test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
+      
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: '7.0.x'
+
+    - name: Check if code has changed
+      id: check_code_changed
+      run: |
+        git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep -qvE '(\.md$)|(\.txt$)' 
+        echo "code_changed=$?" >> $GITHUB_ENV
+
+    - name: Bump version and create tag
+      id: bump_version
+      if: env.code_changed == '0'
+      run: |
+        NEW_VERSION=$(date +'%Y.%m.%d')
+        git tag $NEW_VERSION
+        echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
+
+    - name: Publish to NuGet
+      if: steps.check_code_changed.outputs.code_changed == '0'
+      run: |
+        dotnet pack ./FlexInject/FlexInject.csproj --configuration Release /p:PackageVersion=${{ env.NEW_VERSION }}
+        dotnet nuget push ./FlexInject/bin/Release/*.nupkg --api-key ${{secrets.NUGET_API_KEY}} --source https://api.nuget.org/v3/index.json
