@@ -201,10 +201,8 @@ public class FlexInjectContainerTests
         {
             parentInstance = parentScope.ServiceProvider.GetService<ISample>();
 
-            using (var childScope = parentScope.ServiceProvider.CreateScope())
-            {
-                childInstance = childScope.ServiceProvider.GetService<ISample>();
-            }
+            using var childScope = parentScope.ServiceProvider.CreateScope();
+            childInstance = childScope.ServiceProvider.GetService<ISample>();
         }
 
         Assert.NotSame(parentInstance, childInstance);

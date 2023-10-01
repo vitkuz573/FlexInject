@@ -1,4 +1,5 @@
 ﻿using FlexInject.Abstractions;
+using FlexInject.Enums;
 
 namespace FlexInject;
 

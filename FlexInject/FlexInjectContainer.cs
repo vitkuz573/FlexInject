@@ -1,5 +1,6 @@
 ﻿using FlexInject.Abstractions;
 using FlexInject.Attributes;
+using FlexInject.Enums;
 using System.Collections.Concurrent;
 using System.Reflection;
 
