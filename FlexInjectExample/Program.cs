@@ -1,44 +1,46 @@
 ﻿using FlexInject;
-using FlexInject.Attributes;
 
-namespace FlexInjectExample
+namespace FlexInjectExample;
+
+class Program
 {
-    class Program
+    static void Main()
     {
-        static void Main()
-        {
-            var services = new FlexServiceCollection();
-            services.AddSingleton<ILoggerService, ConsoleLoggerService>();
-            services.AddTransient<Application, Application>();
+        var services = new FlexServiceCollection();
+        services.AddSingleton<ILoggerService, ConsoleLoggerService>();
+        services.AddTransient<Application, Application>();
 
-            using var container = services.BuildServiceProvider();
+        using var container = services.BuildServiceProvider();
 
-            var app = container.GetService<Application>();
-            app.Run();
-        }
+        var app = container.GetService<Application>();
+        app.Run();
+    }
+}
+
+public class Application
+{
+    private readonly ILoggerService _loggerService;
+
+    public Application(ILoggerService loggerService)
+    {
+        _loggerService = loggerService;
     }
 
-    public class Application
+    public void Run()
     {
-        [Inject]
-        private readonly ILoggerService _loggerService;
-
-        public void Run()
-        {
-            _loggerService.Log("Hello from Application!");
-        }
+        _loggerService.Log("Hello from Application!");
     }
+}
 
-    public interface ILoggerService
-    {
-        void Log(string message);
-    }
+public interface ILoggerService
+{
+    void Log(string message);
+}
 
-    public class ConsoleLoggerService : ILoggerService
+public class ConsoleLoggerService : ILoggerService
+{
+    public void Log(string message)
     {
-        public void Log(string message)
-        {
-            Console.WriteLine(message);
-        }
+        Console.WriteLine(message);
     }
 }

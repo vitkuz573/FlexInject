@@ -1,6 +1,5 @@
 using FlexInject;
 using FlexInject.Abstractions;
-using FlexInject.Attributes;
 using System.Diagnostics.CodeAnalysis;
 
 namespace FlexInjectTests;
@@ -102,34 +101,6 @@ public class FlexInjectContainerTests
 
         Assert.NotNull(resolvedInstance);
         Assert.True(resolvedInstance.Disposed);
-    }
-
-    [Fact]
-    public void Resolve_InjectAttributeOnField_ShouldInjectSuccessfully()
-    {
-        var container = CreateContainer(services =>
-        {
-            services.AddTransient<ISample, Sample>();
-            services.AddTransient<ClassWithInjectedField, ClassWithInjectedField>();
-        });
-
-        var instance = container.GetService<ClassWithInjectedField>();
-        Assert.NotNull(instance.Sample);
-        Assert.IsType<Sample>(instance.Sample);
-    }
-
-    [Fact]
-    public void Resolve_InjectAttributeOnProperty_ShouldInjectSuccessfully()
-    {
-        var container = CreateContainer(services =>
-        {
-            services.AddTransient<ISample, Sample>();
-            services.AddTransient<ClassWithInjectedProperty, ClassWithInjectedProperty>();
-        });
-
-        var instance = container.GetService<ClassWithInjectedProperty>();
-        Assert.NotNull(instance.Sample);
-        Assert.IsType<Sample>(instance.Sample);
     }
 
     [Fact]
@@ -311,18 +282,6 @@ public class CyclicSample : ISample
 {
     [SuppressMessage("Style", "IDE0060:Remove unused parameter", Justification = "Intentionally left for testing purposes.")]
     public CyclicSample(ISample sample) { }
-}
-
-public class ClassWithInjectedField
-{
-    [Inject]
-    public ISample Sample;
-}
-
-public class ClassWithInjectedProperty
-{
-    [Inject]
-    public ISample Sample { get; set; }
 }
 
 public class SampleResolvePolicy : IResolvePolicy

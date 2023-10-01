@@ -1,8 +1,6 @@
 ﻿using FlexInject.Abstractions;
-using FlexInject.Attributes;
 using FlexInject.Enums;
 using System.Collections.Concurrent;
-using System.Reflection;
 
 namespace FlexInject;
 
@@ -118,23 +116,6 @@ public class FlexInjectContainer : IFlexServiceProvider, IDisposable
         var parameters = constructor.GetParameters();
         var parameterInstances = parameters.Select(p => Resolve(p.ParameterType)).ToArray();
         var instance = Activator.CreateInstance(implementationType, parameterInstances);
-
-        foreach (var field in implementationType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance).Where(f => f.GetCustomAttribute<InjectAttribute>() != null))
-        {
-            if (field.IsInitOnly)
-            {
-                throw new InvalidOperationException($"Cannot inject into readonly field {field.Name} of type {implementationType.FullName}.");
-            }
-
-            var attr = field.GetCustomAttribute<InjectAttribute>();
-            field.SetValue(instance, Resolve(field.FieldType, attr.Name, attr.Tag));
-        }
-
-        foreach (var property in implementationType.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetCustomAttribute<InjectAttribute>() != null))
-        {
-            var attr = property.GetCustomAttribute<InjectAttribute>();
-            property.SetValue(instance, Resolve(property.PropertyType, attr.Name, attr.Tag));
-        }
 
         (instance as IInitialize)?.Initialize();
 
