@@ -11,7 +11,7 @@ public class FlexInjectContainerTests
     public void Register_ValidTypes_ShouldRegisterSuccessfully()
     {
         var container = CreateContainer(services => services.AddTransient<ISample, Sample>());
-        Assert.IsType<Sample>(container.Resolve<ISample>());
+        Assert.IsType<Sample>(container.GetService<ISample>());
     }
 
     [Fact]
@@ -26,7 +26,7 @@ public class FlexInjectContainerTests
     public void RegisterTransient_ValidTypes_ShouldRegisterSuccessfully()
     {
         var container = CreateContainer(services => services.AddTransient<ISample, Sample>());
-        Assert.IsType<Sample>(container.Resolve<ISample>());
+        Assert.IsType<Sample>(container.GetService<ISample>());
     }
 
     [Fact]
@@ -36,7 +36,7 @@ public class FlexInjectContainerTests
 
         using (container.CreateScope())
         {
-            Assert.IsType<Sample>(container.Resolve<ISample>());
+            Assert.IsType<Sample>(container.GetService<ISample>());
         }
     }
 
@@ -52,7 +52,7 @@ public class FlexInjectContainerTests
     public void RegisterSingleton_ValidType_ShouldRegisterSuccessfully()
     {
         var container = CreateContainer(services => services.AddSingleton<ISample, Sample>());
-        Assert.IsType<Sample>(container.Resolve<ISample>());
+        Assert.IsType<Sample>(container.GetService<ISample>());
     }
 
     [Fact]
@@ -67,28 +67,28 @@ public class FlexInjectContainerTests
     public void Resolve_UnregisteredType_ShouldThrowException()
     {
         var container = CreateContainer();
-        Assert.Throws<InvalidOperationException>(() => container.Resolve<ISample>());
+        Assert.Throws<InvalidOperationException>(() => container.GetService<ISample>());
     }
 
     [Fact]
     public void Resolve_RegisteredType_ShouldReturnInstance()
     {
         var container = CreateContainer(services => services.AddTransient<ISample, Sample>());
-        Assert.IsType<Sample>(container.Resolve<ISample>());
+        Assert.IsType<Sample>(container.GetService<ISample>());
     }
 
     [Fact]
     public void Resolve_CyclicDependency_ShouldThrowException()
     {
         var container = CreateContainer(services => services.AddTransient<ISample, CyclicSample>());
-        Assert.Throws<InvalidOperationException>(() => container.Resolve<ISample>());
+        Assert.Throws<InvalidOperationException>(() => container.GetService<ISample>());
     }
 
     [Fact]
     public void CreateInstance_RegisteredTypeWithInitialize_ShouldCallInitialize()
     {
         var container = CreateContainer(services => services.AddTransient<IInitializableSample, InitializableSample>());
-        var instance = (InitializableSample)container.Resolve<IInitializableSample>();
+        var instance = (InitializableSample)container.GetService<IInitializableSample>();
         Assert.True(instance.Initialized);
     }
 
@@ -96,7 +96,7 @@ public class FlexInjectContainerTests
     public void Dispose_DisposableInstance_ShouldDispose()
     {
         var container = CreateContainer(services => services.AddSingleton<IDisposableSample, DisposableSample>());
-        var resolvedInstance = container.Resolve<IDisposableSample>() as DisposableSample;
+        var resolvedInstance = container.GetService<IDisposableSample>() as DisposableSample;
 
         container.Dispose();
 
@@ -113,7 +113,7 @@ public class FlexInjectContainerTests
             services.AddTransient<ClassWithInjectedField, ClassWithInjectedField>();
         });
 
-        var instance = container.Resolve<ClassWithInjectedField>();
+        var instance = container.GetService<ClassWithInjectedField>();
         Assert.NotNull(instance.Sample);
         Assert.IsType<Sample>(instance.Sample);
     }
@@ -127,7 +127,7 @@ public class FlexInjectContainerTests
             services.AddTransient<ClassWithInjectedProperty, ClassWithInjectedProperty>();
         });
 
-        var instance = container.Resolve<ClassWithInjectedProperty>();
+        var instance = container.GetService<ClassWithInjectedProperty>();
         Assert.NotNull(instance.Sample);
         Assert.IsType<Sample>(instance.Sample);
     }
@@ -136,7 +136,7 @@ public class FlexInjectContainerTests
     public void Resolve_UsingPolicy_ShouldResolveSuccessfully()
     {
         var container = CreateContainer(services => services.AddPolicy(new SampleResolvePolicy()));
-        var instance = container.Resolve<ISample>();
+        var instance = container.GetService<ISample>();
         Assert.NotNull(instance);
         Assert.IsType<Sample>(instance);
     }
@@ -149,12 +149,12 @@ public class FlexInjectContainerTests
 
         using (container.CreateScope())
         {
-            instance1 = container.Resolve<ISample>();
+            instance1 = container.GetService<ISample>();
         }
 
         using (container.CreateScope())
         {
-            instance2 = container.Resolve<ISample>();
+            instance2 = container.GetService<ISample>();
         }
 
         Assert.NotEqual(instance1, instance2);
@@ -169,14 +169,109 @@ public class FlexInjectContainerTests
             services.AddTransient<IConsumer, Consumer>();
         });
 
-        var consumer = container.Resolve<IConsumer>();
+        var consumer = container.GetService<IConsumer>();
 
         Assert.NotNull(consumer);
         Assert.NotNull(consumer.Service);
         Assert.IsType<ServiceImplementation>(consumer.Service);
     }
 
-    private static FlexInjectContainer CreateContainer(Action<FlexServiceCollection> configureServices = null)
+    [Fact]
+    public void CreateScope_ScopedInstance_ShouldBeSameInSameScope()
+    {
+        var container = CreateContainer(services => services.AddScoped<ISample, Sample>());
+        ISample instance1, instance2;
+
+        using (var scope = container.CreateScope())
+        {
+            instance1 = scope.ServiceProvider.GetService<ISample>();
+            instance2 = scope.ServiceProvider.GetService<ISample>();
+        }
+
+        Assert.Same(instance1, instance2);
+    }
+
+    [Fact]
+    public void CreateScope_NestedScopes_ShouldCreateDifferentInstances()
+    {
+        var container = CreateContainer(services => services.AddScoped<ISample, Sample>());
+        ISample parentInstance, childInstance;
+
+        using (var parentScope = container.CreateScope())
+        {
+            parentInstance = parentScope.ServiceProvider.GetService<ISample>();
+
+            using (var childScope = parentScope.ServiceProvider.CreateScope())
+            {
+                childInstance = childScope.ServiceProvider.GetService<ISample>();
+            }
+        }
+
+        Assert.NotSame(parentInstance, childInstance);
+    }
+
+    [Fact]
+    public void CreateScope_Singleton_ShouldBeSameInDifferentScopes()
+    {
+        var container = CreateContainer(services => services.AddSingleton<ISample, Sample>());
+        ISample instance1, instance2;
+
+        using (container.CreateScope())
+        {
+            instance1 = container.GetService<ISample>();
+        }
+
+        using (container.CreateScope())
+        {
+            instance2 = container.GetService<ISample>();
+        }
+
+        Assert.Same(instance1, instance2);
+    }
+
+    [Fact]
+    public void Resolve_TransitiveDependency_ShouldResolveSuccessfully()
+    {
+        var container = CreateContainer(services =>
+        {
+            services.AddTransient<IConsumer, Consumer>();
+            services.AddTransient<IService, ServiceImplementation>();
+        });
+
+        var consumer = container.GetService<IConsumer>();
+
+        Assert.NotNull(consumer);
+        Assert.IsType<Consumer>(consumer);
+        Assert.NotNull(consumer.Service);
+        Assert.IsType<ServiceImplementation>(consumer.Service);
+    }
+
+    [Fact]
+    public void Resolve_WithDifferentNames_ShouldResolveDifferentInstances()
+    {
+        var container = CreateContainer(services =>
+        {
+            services.AddSingleton<ISample, Sample>("name1");
+            services.AddSingleton<ISample, Sample>("name2");
+        });
+
+        var instance1 = container.GetService<ISample>("name1");
+        var instance2 = container.GetService<ISample>("name2");
+
+        Assert.NotNull(instance1);
+        Assert.NotNull(instance2);
+        Assert.NotSame(instance1, instance2);
+    }
+
+    [Fact]
+    public void Register_WithSameNameAndTag_ShouldThrowException()
+    {
+        var services = new FlexServiceCollection();
+        services.AddSingleton<ISample, Sample>("name", "tag");
+        Assert.Throws<InvalidOperationException>(() => services.AddSingleton<ISample, Sample>("name", "tag"));
+    }
+
+    private static IFlexServiceProvider CreateContainer(Action<FlexServiceCollection> configureServices = null)
     {
         var services = new FlexServiceCollection();
         configureServices?.Invoke(services);

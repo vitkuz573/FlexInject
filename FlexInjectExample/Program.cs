@@ -1,6 +1,5 @@
 ﻿using FlexInject;
 using FlexInject.Attributes;
-using System;
 
 namespace FlexInjectExample
 {
@@ -14,7 +13,7 @@ namespace FlexInjectExample
 
             using var container = services.BuildServiceProvider();
 
-            var app = container.Resolve<Application>();
+            var app = container.GetService<Application>();
             app.Run();
         }
     }

@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace FlexInject;
 
-public class FlexInjectContainer : IDisposable
+public class FlexInjectContainer : IFlexServiceProvider, IDisposable
 {
     private readonly ConcurrentDictionary<(Type, string, string), Type> _typeMapping = new();
     private readonly ConcurrentDictionary<(Type, string, string), Type> _transientMapping = new();
@@ -20,7 +20,7 @@ public class FlexInjectContainer : IDisposable
         foreach (var service in services)
         {
             var key = (service.ServiceType, service.Name ?? "default", service.Tag ?? "default");
-            
+
             switch (service.Lifetime)
             {
                 case ServiceLifetime.Transient:
@@ -69,7 +69,7 @@ public class FlexInjectContainer : IDisposable
             foreach (var policy in _policies)
             {
                 var policyInstance = policy.Resolve(this, type, name, tag);
-                
+
                 if (policyInstance != null)
                 {
                     return policyInstance;
@@ -81,7 +81,7 @@ public class FlexInjectContainer : IDisposable
                 || (scopedInstances != null && _scopedMapping.TryGetValue((type, name ?? "default", tag ?? "default"), out implementationType)))
             {
                 var createdInstance = CreateInstance(implementationType);
-                
+
                 if (scopedInstances != null && _scopedMapping.ContainsKey((type, name ?? "default", tag ?? "default")))
                 {
                     scopedInstances.TryAdd((type, name ?? "default", tag ?? "default"), createdInstance);
@@ -99,6 +99,16 @@ public class FlexInjectContainer : IDisposable
                 _resolveStack.Value.Pop();
             }
         }
+    }
+
+    public object GetService(Type serviceType, string name = null, string tag = null)
+    {
+        return Resolve(serviceType, name, tag);
+    }
+
+    public T GetService<T>(string name = null, string tag = null)
+    {
+        return (T)GetService(typeof(T), name, tag);
     }
 
     private object CreateInstance(Type implementationType)
@@ -130,11 +140,16 @@ public class FlexInjectContainer : IDisposable
         _policies.Add(policy);
     }
 
-    public IDisposable CreateScope()
+    public IFlexServiceScope CreateScope()
+    {
+        var scope = new FlexServiceScope(this);
+
+        return scope;
+    }
+
+    public void InitializeScopedInstances()
     {
         _scopedInstances.Value = new ConcurrentDictionary<(Type, string, string), object>();
-        
-        return new Disposer(() => _scopedInstances.Value = null);
     }
 
     public void Dispose()

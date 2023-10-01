@@ -9,33 +9,33 @@ public class FlexServiceCollection : IFlexServiceCollection
 
     public IFlexServiceCollection AddTransient<TService, TImplementation>(string name = null, string tag = null) where TImplementation : TService
     {
-        CheckForExistingRegistration(typeof(TService), ServiceLifetime.Transient);
+        CheckForExistingRegistration(typeof(TService), typeof(TImplementation), ServiceLifetime.Transient, name, tag);
         _services.Add(new ServiceDescriptor(typeof(TService), typeof(TImplementation), ServiceLifetime.Transient, name, tag));
-        
+
         return this;
     }
 
     public IFlexServiceCollection AddScoped<TService, TImplementation>(string name = null, string tag = null) where TImplementation : TService
     {
-        CheckForExistingRegistration(typeof(TService), ServiceLifetime.Scoped);
+        CheckForExistingRegistration(typeof(TService), typeof(TImplementation), ServiceLifetime.Scoped, name, tag);
         _services.Add(new ServiceDescriptor(typeof(TService), typeof(TImplementation), ServiceLifetime.Scoped, name, tag));
-        
+
         return this;
     }
 
     public IFlexServiceCollection AddSingleton<TService, TImplementation>(string name = null, string tag = null) where TImplementation : TService
     {
-        CheckForExistingRegistration(typeof(TService), ServiceLifetime.Singleton);
+        CheckForExistingRegistration(typeof(TService), typeof(TImplementation), ServiceLifetime.Singleton, name, tag);
         _services.Add(new ServiceDescriptor(typeof(TService), typeof(TImplementation), ServiceLifetime.Singleton, name, tag));
-        
+
         return this;
     }
 
-    private void CheckForExistingRegistration(Type serviceType, ServiceLifetime lifetime, string name = null, string tag = null)
+    private void CheckForExistingRegistration(Type serviceType, Type implementationType, ServiceLifetime lifetime, string name = null, string tag = null)
     {
-        if (_services.Any(s => s.ServiceType == serviceType && s.Lifetime == lifetime && s.Name == name && s.Tag == tag))
+        if (_services.Any(s => s.ServiceType == serviceType && s.ImplementationType == implementationType && s.Lifetime == lifetime && s.Name == name && s.Tag == tag))
         {
-            throw new InvalidOperationException($"{serviceType.FullName} has already been registered with {lifetime} lifetime, name {name ?? "default"} and tag {tag ?? "default"}.");
+            throw new InvalidOperationException($"{serviceType.FullName} with implementation {implementationType.FullName} has already been registered with {lifetime} lifetime, name {name ?? "default"} and tag {tag ?? "default"}.");
         }
     }
 
@@ -46,7 +46,7 @@ public class FlexServiceCollection : IFlexServiceCollection
         return this;
     }
 
-    public FlexInjectContainer BuildServiceProvider()
+    public IFlexServiceProvider BuildServiceProvider()
     {
         var container = new FlexInjectContainer(_services);
 
