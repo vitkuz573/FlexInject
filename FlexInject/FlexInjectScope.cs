@@ -7,7 +7,7 @@ namespace FlexInject;
 /// Represents a scope within which scoped dependencies are cached.
 /// When the scope is disposed, all cached instances are disposed as well.
 /// </summary>
-public class FlexInjectScope : IDisposable
+internal class FlexInjectScope : IDisposable
 {
     private readonly ConcurrentDictionary<InjectionKey, object> _scopedInstances = new();
 

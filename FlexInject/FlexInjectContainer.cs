@@ -19,7 +19,7 @@ public class FlexInjectContainer : IDisposable
     private readonly AsyncLocal<Stack<Type>> _resolveStack = new();
     private readonly AsyncLocal<FlexInjectScope?> _currentScope = new();
 
-    public FlexInjectScope? CurrentScope => _currentScope.Value;
+    internal FlexInjectScope? CurrentScope => _currentScope.Value;
 
     #region Registration
 

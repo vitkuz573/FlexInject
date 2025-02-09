@@ -6,7 +6,7 @@ namespace FlexInject.Models;
 /// Encapsulates a dependency registration. It stores the service type, its implementation,
 /// lifetime, and an optional factory for custom instantiation.
 /// </summary>
-public class Registration(Type serviceType, Type implementationType, Lifetime lifetime, Func<FlexInjectContainer, object>? factory = null)
+internal class Registration(Type serviceType, Type implementationType, Lifetime lifetime, Func<FlexInjectContainer, object>? factory = null)
 {
     public Type ServiceType { get; } = serviceType;
     
@@ -35,6 +35,7 @@ public class Registration(Type serviceType, Type implementationType, Lifetime li
                         _singletonInstance ??= CreateInstance(container);
                     }
                 }
+
                 return _singletonInstance;
             case Lifetime.Scoped:
                 var scope = container.CurrentScope ?? throw new InvalidOperationException("Attempted to resolve a scoped dependency without an active scope.");

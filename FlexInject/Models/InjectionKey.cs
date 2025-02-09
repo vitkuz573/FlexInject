@@ -4,7 +4,7 @@
 /// Represents a key for dependency registrations. It encapsulates the service type,
 /// a name, and a tag.
 /// </summary>
-public class InjectionKey(Type serviceType, string? name, string? tag) : IEquatable<InjectionKey>
+internal class InjectionKey(Type serviceType, string? name, string? tag) : IEquatable<InjectionKey>
 {
     public Type ServiceType { get; } = serviceType;
 
