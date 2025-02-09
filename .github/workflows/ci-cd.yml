@@ -69,7 +69,7 @@ jobs:
     - name: Setup .NET
       uses: actions/setup-dotnet@v1
       with:
-        dotnet-version: '7.0.x'
+        dotnet-version: '9.0.x'
       
     - name: Check if code has changed
       id: check_code_changed
