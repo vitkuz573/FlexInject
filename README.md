@@ -9,7 +9,6 @@ FlexInject is a lightweight, efficient, and flexible Dependency Injection contai
 ### Features:
 - **Type Registration**: Register types with optional names and tags.
 - **Lifecycle Management**: Support for Transient, Scoped, and Singleton lifecycles.
-- **Attribute Injection**: Inject dependencies using the `InjectAttribute` on fields and properties.
 - **Custom Resolve Policies**: Extend resolving capabilities using custom policies.
 - **Scope Management**: Create and manage scopes for resolving scoped instances.
 - **Cyclic Dependency Detection**: Detects cyclic dependencies and throws informative exceptions.
@@ -40,20 +39,6 @@ var service = container.Resolve<IService>();
 using (var scope = container.CreateScope())
 {
     var scopedService = container.Resolve<IScopedService>();
-}
-```
-
-### Attribute Injection:
-FlexInject supports attribute injection using the `InjectAttribute`, which can be applied to properties and fields. You can optionally specify name and tag via attributes.
-
-```csharp
-public class MyClass
-{
-    [Inject(Name = "specialService")]
-    private readonly IService _service;
-    
-    [Inject(Tag = "taggedService")]
-    public IAnotherService AnotherService { get; set; }
 }
 ```
 

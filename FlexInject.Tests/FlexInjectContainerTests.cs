@@ -1,5 +1,4 @@
 using FlexInject.Abstractions;
-using FlexInject.Attributes;
 
 namespace FlexInject.Tests;
 
@@ -188,38 +187,6 @@ public class FlexInjectContainerTests
     }
 
     [Fact]
-    public void Resolve_InjectAttributeOnField_ShouldInjectSuccessfully()
-    {
-        // Arrange
-        var container = CreateContainer();
-        container.Register<ISample, Sample>();
-        container.Register<ClassWithInjectedField, ClassWithInjectedField>();
-
-        // Act
-        var instance = container.Resolve<ClassWithInjectedField>();
-
-        // Assert
-        Assert.NotNull(instance.Sample);
-        Assert.IsType<Sample>(instance.Sample);
-    }
-
-    [Fact]
-    public void Resolve_InjectAttributeOnProperty_ShouldInjectSuccessfully()
-    {
-        // Arrange
-        var container = CreateContainer();
-        container.Register<ISample, Sample>();
-        container.Register<ClassWithInjectedProperty, ClassWithInjectedProperty>();
-
-        // Act
-        var instance = container.Resolve<ClassWithInjectedProperty>();
-
-        // Assert
-        Assert.NotNull(instance.Sample);
-        Assert.IsType<Sample>(instance.Sample);
-    }
-
-    [Fact]
     public void Resolve_WithDifferentNameAndTag_ShouldResolveSuccessfully()
     {
         // Arrange
@@ -329,18 +296,6 @@ public class DisposableSample : IDisposableSample
 
 public class CyclicSample(ISample sample) : ISample
 {
-}
-
-public class ClassWithInjectedField
-{
-    [Inject]
-    public ISample Sample;
-}
-
-public class ClassWithInjectedProperty
-{
-    [Inject]
-    public ISample Sample { get; set; }
 }
 
 public class SampleResolvePolicy : IResolvePolicy

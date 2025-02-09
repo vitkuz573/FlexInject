@@ -1,5 +1,4 @@
 ﻿using FlexInject;
-using FlexInject.Attributes;
 
 namespace FlexInjectExample;
 
@@ -16,14 +15,11 @@ class Program
     }
 }
 
-public class Application
+public class Application(ILoggerService loggerService)
 {
-    [Inject]
-    public ILoggerService LoggerService { get; set; }
-
     public void Run()
     {
-        LoggerService.Log("Hello from Application!");
+        loggerService.Log("Hello from Application!");
     }
 }
 
