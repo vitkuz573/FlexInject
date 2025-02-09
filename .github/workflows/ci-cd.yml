@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        dotnet: ['7.0.x']
+        dotnet: ['8.0.x', 9.0.x']
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
@@ -86,7 +86,7 @@ jobs:
       if: env.code_changed == 'true'
       run: |
         COMMIT_COUNT=$(git rev-list --count HEAD)
-        NEW_VERSION="1.0.$COMMIT_COUNT"
+        NEW_VERSION="2.0.$COMMIT_COUNT"
         git tag $NEW_VERSION
         echo "NEW_VERSION=$NEW_VERSION" >> $GITHUB_ENV
       
