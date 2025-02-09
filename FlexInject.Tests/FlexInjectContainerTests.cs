@@ -345,7 +345,7 @@ public class ClassWithInjectedProperty
 
 public class SampleResolvePolicy : IResolvePolicy
 {
-    public object Resolve(FlexInjectContainer container, Type type, string name, string tag)
+    public object? Resolve(FlexInjectContainer container, Type type, string? name, string? tag)
     {
         return type == typeof(ISample) ? new Sample() : (object?)null;
     }

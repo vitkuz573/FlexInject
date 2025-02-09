@@ -63,7 +63,7 @@ You can extend the resolving capabilities of the container by implementing and a
 ```csharp
 public class MyResolvePolicy : IResolvePolicy
 {
-    public object Resolve(FlexInjectContainer container, Type type, string? name, string? tag)
+    public object? Resolve(FlexInjectContainer container, Type type, string? name, string? tag)
     {
         // Custom resolve logic here.
     }

@@ -8,25 +8,46 @@ using System.Reflection;
 namespace FlexInject;
 
 /// <summary>
-/// The main DI container. It supports registration with various lifetimes,
-/// custom resolution policies, property/field injection, and scoping.
+/// The main dependency injection container.
+/// Provides registration with various lifetimes, custom resolution policies,
+/// property/field injection, and scoping.
 /// </summary>
 public class FlexInjectContainer : IDisposable
 {
+    // Holds all registrations keyed by InjectionKey.
     private readonly ConcurrentDictionary<InjectionKey, Registration> _registrations = [];
+    // List of custom resolution policies.
     private readonly List<IResolvePolicy> _policies = [];
 
+    // Cache for the selected constructor for each type to improve performance.
+    private readonly ConcurrentDictionary<Type, ConstructorInfo> _constructorCache = [];
+
+    // Used to detect circular dependencies.
     private readonly AsyncLocal<Stack<Type>> _resolveStack = new();
+    // Holds the current active scope (if any).
     private readonly AsyncLocal<FlexInjectScope?> _currentScope = new();
 
+    /// <summary>
+    /// Gets the current active scope.
+    /// </summary>
     internal FlexInjectScope? CurrentScope => _currentScope.Value;
 
     #region Registration
 
+    /// <summary>
+    /// Registers a transient dependency.
+    /// </summary>
+    /// <typeparam name="TInterface">The service interface type.</typeparam>
+    /// <typeparam name="TImplementation">The implementation type.</typeparam>
+    /// <param name="name">An optional name identifier.</param>
+    /// <param name="tag">An optional tag identifier.</param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown if the type is already registered.
+    /// </exception>
     public void Register<TInterface, TImplementation>(string? name = null, string? tag = null) where TImplementation : TInterface
     {
         ValidateTypeCompatibility<TInterface, TImplementation>();
-        
+
         var key = new InjectionKey(typeof(TInterface), name, tag);
         var reg = new Registration(typeof(TInterface), typeof(TImplementation), Lifetime.Transient);
         
@@ -36,23 +57,21 @@ public class FlexInjectContainer : IDisposable
         }
     }
 
+    /// <summary>
+    /// Registers a transient dependency.
+    /// </summary>
     public void RegisterTransient<TInterface, TImplementation>(string? name = null, string? tag = null) where TImplementation : TInterface
     {
-        ValidateTypeCompatibility<TInterface, TImplementation>();
-        
-        var key = new InjectionKey(typeof(TInterface), name, tag);
-        var reg = new Registration(typeof(TInterface), typeof(TImplementation), Lifetime.Transient);
-        
-        if (!_registrations.TryAdd(key, reg))
-        {
-            throw new InvalidOperationException($"Transient type {typeof(TInterface).FullName} with name '{name ?? "default"}' and tag '{tag ?? "default"}' is already registered.");
-        }
+        Register<TInterface, TImplementation>(name, tag);
     }
 
+    /// <summary>
+    /// Registers a scoped dependency.
+    /// </summary>
     public void RegisterScoped<TInterface, TImplementation>(string? name = null, string? tag = null) where TImplementation : TInterface
     {
         ValidateTypeCompatibility<TInterface, TImplementation>();
-        
+
         var key = new InjectionKey(typeof(TInterface), name, tag);
         var reg = new Registration(typeof(TInterface), typeof(TImplementation), Lifetime.Scoped);
         
@@ -62,10 +81,13 @@ public class FlexInjectContainer : IDisposable
         }
     }
 
+    /// <summary>
+    /// Registers a singleton dependency.
+    /// </summary>
     public void RegisterSingleton<TInterface, TImplementation>(string? name = null, string? tag = null) where TImplementation : TInterface, new()
     {
         ValidateTypeCompatibility<TInterface, TImplementation>();
-        
+
         var key = new InjectionKey(typeof(TInterface), name, tag);
         var reg = new Registration(typeof(TInterface), typeof(TImplementation), Lifetime.Singleton);
         
@@ -87,17 +109,33 @@ public class FlexInjectContainer : IDisposable
 
     #region Dependency Resolution
 
+    /// <summary>
+    /// Resolves an instance of the specified service type.
+    /// </summary>
+    /// <typeparam name="TInterface">The service interface type.</typeparam>
+    /// <param name="name">An optional name identifier.</param>
+    /// <param name="tag">An optional tag identifier.</param>
+    /// <returns>An instance of the requested type.</returns>
     public TInterface Resolve<TInterface>(string? name = null, string? tag = null)
     {
         return (TInterface)Resolve(typeof(TInterface), name, tag);
     }
 
+    /// <summary>
+    /// Resolves an instance of the specified service type.
+    /// </summary>
+    /// <param name="serviceType">The service type to resolve.</param>
+    /// <param name="name">An optional name identifier.</param>
+    /// <param name="tag">An optional tag identifier.</param>
+    /// <returns>An instance of the requested type.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown if a circular dependency is detected or the type is not registered.
+    /// </exception>
     public object Resolve(Type serviceType, string? name = null, string? tag = null)
     {
         var key = new InjectionKey(serviceType, name, tag);
-
         var stack = _resolveStack.Value ??= new Stack<Type>();
-        
+
         if (stack.Contains(serviceType))
         {
             throw new InvalidOperationException($"Circular dependency detected for type {serviceType.FullName}");
@@ -107,6 +145,7 @@ public class FlexInjectContainer : IDisposable
         
         try
         {
+            // Check custom resolution policies first.
             foreach (var policy in _policies)
             {
                 var result = policy.Resolve(this, serviceType, name, tag);
@@ -136,12 +175,19 @@ public class FlexInjectContainer : IDisposable
     /// Creates a new instance of the specified implementation type,
     /// performing constructor injection as well as property and field injection.
     /// </summary>
+    /// <param name="implementationType">The implementation type to instantiate.</param>
+    /// <returns>A new instance of the implementation type.</returns>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown if no public constructor is found or instance creation fails.
+    /// </exception>
     internal object CreateInstance(Type implementationType)
     {
-        var ctor = implementationType.GetConstructors()
-                                     .OrderByDescending(c => c.GetParameters().Length)
-                                     .FirstOrDefault() ?? throw new InvalidOperationException($"No public constructors found for {implementationType.FullName}");
-        
+        // Attempt to get the constructor from cache or compute and cache it.
+        var ctor = _constructorCache.GetOrAdd(implementationType, type =>
+            type.GetConstructors()
+                .OrderByDescending(c => c.GetParameters().Length)
+                .FirstOrDefault() ?? throw new InvalidOperationException($"No public constructors found for {type.FullName}"));
+
         var parameters = ctor.GetParameters();
         var parameterInstances = new object?[parameters.Length];
         
@@ -149,7 +195,7 @@ public class FlexInjectContainer : IDisposable
         {
             parameterInstances[i] = Resolve(parameters[i].ParameterType);
         }
-        
+
         var instance = Activator.CreateInstance(implementationType, parameterInstances) ?? throw new InvalidOperationException($"Failed to create an instance of {implementationType.FullName}");
 
         InjectDependencies(instance, implementationType);
@@ -164,8 +210,9 @@ public class FlexInjectContainer : IDisposable
 
     private void InjectDependencies(object instance, Type implementationType)
     {
+        // Field injection.
         var fields = implementationType.GetFields(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)
-                                       .Where(f => f.IsDefined(typeof(InjectAttribute), inherit: true));
+            .Where(f => f.IsDefined(typeof(InjectAttribute), inherit: true));
         
         foreach (var field in fields)
         {
@@ -178,8 +225,9 @@ public class FlexInjectContainer : IDisposable
             }
         }
 
+        // Property injection.
         var properties = implementationType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
-                                           .Where(p => p.IsDefined(typeof(InjectAttribute), inherit: true));
+            .Where(p => p.IsDefined(typeof(InjectAttribute), inherit: true));
         
         foreach (var property in properties)
         {
@@ -198,15 +246,15 @@ public class FlexInjectContainer : IDisposable
     #region Scoping
 
     /// <summary>
-    /// Creates a new scope. Within a scope, all Scoped dependencies are cached.
-    /// When the scope is disposed, the cached objects are disposed.
+    /// Creates a new scope. Scoped dependencies are cached within the scope.
+    /// When the scope is disposed, the cached objects are also disposed.
     /// </summary>
+    /// <returns>An <see cref="IDisposable"/> that ends the scope when disposed.</returns>
     public IDisposable CreateScope()
     {
         var scope = new FlexInjectScope();
-        
         _currentScope.Value = scope;
-
+        
         return new ScopeWrapper(this, scope);
     }
 
@@ -228,7 +276,7 @@ public class FlexInjectContainer : IDisposable
             {
                 scope.Dispose();
                 container.EndScope(scope);
-
+                
                 _disposed = true;
             }
         }
@@ -238,6 +286,10 @@ public class FlexInjectContainer : IDisposable
 
     #region Resolution Policies
 
+    /// <summary>
+    /// Adds a custom resolution policy.
+    /// </summary>
+    /// <param name="policy">The custom policy to add.</param>
     public void AddPolicy(IResolvePolicy policy)
     {
         _policies.Add(policy);
@@ -247,6 +299,9 @@ public class FlexInjectContainer : IDisposable
 
     #region IDisposable Support
 
+    /// <summary>
+    /// Disposes the container and any disposable singleton or scoped instances.
+    /// </summary>
     public void Dispose()
     {
         foreach (var reg in _registrations.Values)
